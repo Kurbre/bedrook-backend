@@ -12,9 +12,9 @@ import {
 import { NotesService } from './notes.service'
 import { CreateNoteDto } from './dto/create-note.dto'
 import { UpdateNoteDto } from './dto/update-note.dto'
-import { Auth } from 'src/auth/decorators/auth.decorator'
-import { GetUser } from 'src/users/decorators/users.decorator'
-import { type MongoType } from 'src/utils/types/mongo-type'
+import { Auth } from '../auth/decorators/auth.decorator'
+import { GetUser } from '../users/decorators/users.decorator'
+import { type MongoType } from '../utils/types/mongo-type'
 
 @Controller('notes')
 export class NotesController {
@@ -27,23 +27,8 @@ export class NotesController {
 		return this.notesService.create(userId)
 	}
 
-	@Get()
-	findAll() {
-		return this.notesService.findAll()
-	}
-
-	@Get(':id')
-	findOne(@Param('id') id: string) {
-		return this.notesService.findOne(id)
-	}
-
 	@Patch(':id')
-	update(@Param('id') id: string, @Body() dto: UpdateNoteDto) {
+	update(@Param('id') id: MongoType, @Body() dto: UpdateNoteDto) {
 		return this.notesService.update(id, dto)
-	}
-
-	@Delete(':id')
-	remove(@Param('id') id: string) {
-		return this.notesService.remove(id)
 	}
 }
