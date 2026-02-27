@@ -1,7 +1,7 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose'
 import mongoose, { HydratedDocument } from 'mongoose'
 import { User } from '../users/users.model'
-import { MongoType } from '../utils/types/mongo-type'
+import { type Types, type PopulatedDoc } from 'mongoose'
 
 export type NoteDocument = HydratedDocument<Note>
 
@@ -15,11 +15,18 @@ export class Note {
 	@Prop({ default: '' })
 	text: string
 
+	@Prop()
+	order: number
+
 	@Prop({ default: true })
 	isEditMode: boolean
 
-	@Prop({ type: { type: mongoose.Schema.Types.ObjectId, ref: 'User' } })
-	user: MongoType | User
+	@Prop({
+		type: mongoose.Schema.Types.ObjectId,
+		ref: 'User',
+		required: true
+	})
+	user: PopulatedDoc<User & Types.Subdocument>
 }
 
 export const NoteSchema = SchemaFactory.createForClass(Note)

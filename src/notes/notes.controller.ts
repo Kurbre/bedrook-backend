@@ -26,8 +26,14 @@ export class NotesController {
 		return this.notesService.create(userId)
 	}
 
+	@Auth()
 	@Patch(':id')
-	update(@Param('id') id: MongoType, @Body() dto: UpdateNoteDto) {
-		return this.notesService.update(id, dto)
+	@HttpCode(HttpStatus.OK)
+	update(
+		@Param('id') id: MongoType,
+		@Body() dto: UpdateNoteDto,
+		@GetUser('_id') userId: string
+	) {
+		return this.notesService.update(id, dto, userId)
 	}
 }
