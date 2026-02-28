@@ -1,8 +1,7 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose'
 import mongoose, { HydratedDocument } from 'mongoose'
-import { Note } from 'src/notes/notes.model'
-import { MongoType } from '../utils/types/mongo-type'
-import { Folder } from 'src/folders/folders.model'
+import { Note } from '../notes/notes.model'
+import { Folder } from '../folders/folders.model'
 
 export type UserDocument = HydratedDocument<User>
 

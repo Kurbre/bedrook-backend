@@ -3,8 +3,8 @@ import { FoldersService } from './folders.service'
 import { FoldersController } from './folders.controller'
 import { MongooseModule } from '@nestjs/mongoose'
 import { Folder, FolderSchema } from './folders.model'
-import { User, UserSchema } from 'src/users/users.model'
-import { UsersModule } from 'src/users/users.module'
+import { User, UserSchema } from '../users/users.model'
+import { UsersModule } from '../users/users.module'
 
 @Module({
 	controllers: [FoldersController],

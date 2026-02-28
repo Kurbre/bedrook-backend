@@ -99,10 +99,9 @@ describe('AuthController', () => {
 			.mockRejectedValueOnce(new NotFoundException('Пользователь не найден'))
 
 		await expect(
-			controller.register(
-				{ email: '', login: '', phoneNumber: '', password: '' },
-				{ session: {} } as Request
-			)
+			controller.register({ email: '', login: '', password: '' }, {
+				session: {}
+			} as Request)
 		).rejects.toThrow(NotFoundException)
 	})
 

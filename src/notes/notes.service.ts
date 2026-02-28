@@ -4,7 +4,7 @@ import {
 	NotFoundException
 } from '@nestjs/common'
 import { UpdateNoteDto } from './dto/update-note.dto'
-import { type MongoType } from 'src/utils/types/mongo-type'
+import { type MongoType } from '../utils/types/mongo-type'
 import { InjectModel } from '@nestjs/mongoose'
 import { Note, NoteDocument } from './notes.model'
 import { Model } from 'mongoose'

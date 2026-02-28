@@ -27,11 +27,21 @@ describe('NotesService', () => {
 
 	const mockNoteModel = {
 		create: jest.fn().mockResolvedValue(note),
-		findByIdAndUpdate: jest.fn()
+		findByIdAndUpdate: jest.fn(),
+		findById: jest.fn().mockImplementation((id: any) => ({
+			populate: () => ({
+				exec: () => Promise.resolve({ ...note, user: { _id: '123' } })
+			})
+		}))
 	}
 
 	const mockUserModel = {
-		findByIdAndUpdate: jest.fn().mockResolvedValue({})
+		findByIdAndUpdate: jest.fn().mockResolvedValue({}),
+		findById: jest.fn().mockImplementation((id: any) => ({
+			populate: () => ({
+				exec: () => Promise.resolve({ notes: [] })
+			})
+		}))
 	}
 
 	beforeEach(async () => {
@@ -39,7 +49,8 @@ describe('NotesService', () => {
 		mockNoteModel.create.mockResolvedValue(note)
 		mockNoteModel.findByIdAndUpdate.mockResolvedValue({
 			...note,
-			...updateDto
+			...updateDto,
+			user: { _id: '123' }
 		})
 		const module: TestingModule = await Test.createTestingModule({
 			providers: [
@@ -72,21 +83,25 @@ describe('NotesService', () => {
 	it('should be created note', async () => {
 		const result = await service.create('userId')
 		expect(result).toEqual(note)
-		expect(mockNoteModel.create).toHaveBeenCalledWith({ user: 'userId' })
+		expect(mockNoteModel.create).toHaveBeenCalledWith({
+			user: 'userId',
+			order: 1
+		})
 	})
 
 	it('should be updated note', async () => {
-		const result = await service.update(note._id, updateDto)
+		const result = await service.update(note._id, updateDto, '123')
 		expect(result).toEqual({
 			...note,
 			title: updateDto.title,
 			text: updateDto.text,
-			isEditMode: updateDto.isEditMode
+			isEditMode: updateDto.isEditMode,
+			user: { _id: '123' }
 		})
 		expect(mockNoteModel.findByIdAndUpdate).toHaveBeenCalledWith(
 			note._id,
 			updateDto,
-			{ new: true }
+			{ returnDocument: 'after' }
 		)
 	})
 })

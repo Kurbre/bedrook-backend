@@ -11,9 +11,8 @@ import {
 } from '@nestjs/common'
 import { FoldersService } from './folders.service'
 import { CreateFolderDto } from './dto/create-folder.dto'
-import { UpdateFolderDto } from './dto/update-folder.dto'
-import { Auth } from 'src/auth/decorators/auth.decorator'
-import { GetUser } from 'src/users/decorators/users.decorator'
+import { Auth } from '../auth/decorators/auth.decorator'
+import { GetUser } from '../users/decorators/users.decorator'
 
 @Controller('folders')
 export class FoldersController {
@@ -29,23 +28,21 @@ export class FoldersController {
 		return this.foldersService.create(createFolderDto, userId)
 	}
 
-	@Get()
-	findAll() {
-		return this.foldersService.findAll()
-	}
-
-	@Get(':id')
-	findOne(@Param('id') id: string) {
-		return this.foldersService.findOne(+id)
-	}
-
 	@Patch(':id')
-	update(@Param('id') id: string, @Body() updateFolderDto: UpdateFolderDto) {
-		return this.foldersService.update(+id, updateFolderDto)
+	@Auth()
+	@HttpCode(HttpStatus.OK)
+	update(
+		@Param('id') id: string,
+		@Body() updateFolderDto: CreateFolderDto,
+		@GetUser('_id') userId: string
+	) {
+		return this.foldersService.update(id, updateFolderDto, userId)
 	}
 
 	@Delete(':id')
-	remove(@Param('id') id: string) {
-		return this.foldersService.remove(+id)
+	@Auth()
+	@HttpCode(HttpStatus.OK)
+	remove(@Param('id') id: string, @GetUser('_id') userId: string) {
+		return this.foldersService.remove(id, userId)
 	}
 }

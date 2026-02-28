@@ -3,8 +3,8 @@ import { NotesService } from './notes.service'
 import { NotesController } from './notes.controller'
 import { MongooseModule } from '@nestjs/mongoose'
 import { Note, NoteSchema } from './notes.model'
-import { User, UserSchema } from 'src/users/users.model'
-import { UsersModule } from 'src/users/users.module'
+import { User, UserSchema } from '../users/users.model'
+import { UsersModule } from '../users/users.module'
 
 @Module({
 	controllers: [NotesController],

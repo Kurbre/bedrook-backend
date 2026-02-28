@@ -1,13 +1,14 @@
-import { Injectable } from '@nestjs/common'
+import {
+	ForbiddenException,
+	Injectable,
+	NotFoundException
+} from '@nestjs/common'
 import { CreateFolderDto } from './dto/create-folder.dto'
-import { UpdateFolderDto } from './dto/update-folder.dto'
 import { MongoType } from '../utils/types/mongo-type'
 import { InjectModel } from '@nestjs/mongoose'
 import { Folder, FolderDocument } from './folders.model'
 import { Model } from 'mongoose'
-import { Note } from 'src/notes/notes.model'
-import { User } from 'src/users/users.model'
-import { max } from 'class-validator'
+import { User, UserDocument } from '../users/users.model'
 
 @Injectable()
 export class FoldersService {
@@ -17,13 +18,7 @@ export class FoldersService {
 	) {}
 
 	async create(dto: CreateFolderDto, userId: MongoType) {
-		const folders = await this.folderModel
-			.find()
-			.populate<{ notes: Note[] }>({
-				path: 'notes',
-				options: { sort: { order: 1 } }
-			})
-			.exec()
+		const folders = await this.folderModel.find().exec()
 
 		const maxOrder =
 			folders!.length > 0 ? Math.max(...folders!.map(n => n.order)) : 0
@@ -31,7 +26,7 @@ export class FoldersService {
 		const folder = (await this.folderModel.create({
 			user: userId,
 			title: dto.title,
-			order: maxOrder
+			order: maxOrder + 1
 		})) as FolderDocument
 
 		await this.userModel.findByIdAndUpdate(userId, {
@@ -43,19 +38,41 @@ export class FoldersService {
 		return folder
 	}
 
-	findAll() {
-		return `This action returns all folders`
+	async update(id: string, dto: CreateFolderDto, userId: MongoType) {
+		await this.findById(id, userId)
+
+		return await this.folderModel.findByIdAndUpdate(id, dto, {
+			returnDocument: 'after'
+		})
 	}
 
-	findOne(id: number) {
-		return `This action returns a #${id} folder`
+	async remove(id: string, userId: MongoType) {
+		await this.findById(id, userId)
+
+		await this.folderModel.findByIdAndDelete(id)
+
+		await this.userModel.findByIdAndUpdate(userId, {
+			$pull: {
+				folders: id
+			}
+		})
+
+		return {
+			message: 'Папка успешно удалена.'
+		}
 	}
 
-	update(id: number, updateFolderDto: UpdateFolderDto) {
-		return `This action updates a #${id} folder`
-	}
+	async findById(id: string, userId: MongoType) {
+		const folder = await this.folderModel
+			.findById(id)
+			.populate<{ user: UserDocument }>('user')
+			.exec()
 
-	remove(id: number) {
-		return `This action removes a #${id} folder`
+		if (!folder) throw new NotFoundException('Заметка не найдена.')
+
+		if (folder.user._id.toString() !== userId.toString())
+			throw new ForbiddenException('У вас нету доступа к этой заметке.')
+
+		return folder
 	}
 }

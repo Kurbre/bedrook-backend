@@ -5,7 +5,7 @@ import mongoose, {
 	type PopulatedDoc
 } from 'mongoose'
 import { User } from '../users/users.model'
-import { Note } from 'src/notes/notes.model'
+import { Note } from '../notes/notes.model'
 
 export type FolderDocument = HydratedDocument<Folder>
 
@@ -19,7 +19,11 @@ export class Folder {
 	@Prop()
 	order: number
 
-	@Prop({ type: { type: mongoose.Schema.Types.ObjectId, ref: 'User' } })
+	@Prop({
+		type: mongoose.Schema.Types.ObjectId,
+		ref: 'User',
+		required: true
+	})
 	user: PopulatedDoc<User & Types.Subdocument>
 
 	@Prop({ type: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Note' }] })
