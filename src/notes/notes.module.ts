@@ -5,6 +5,7 @@ import { MongooseModule } from '@nestjs/mongoose'
 import { Note, NoteSchema } from './notes.model'
 import { User, UserSchema } from '../users/users.model'
 import { UsersModule } from '../users/users.module'
+import { FoldersModule } from 'src/folders/folders.module'
 
 @Module({
 	controllers: [NotesController],
@@ -14,7 +15,8 @@ import { UsersModule } from '../users/users.module'
 			{ name: Note.name, schema: NoteSchema },
 			{ name: User.name, schema: UserSchema }
 		]),
-		UsersModule
+		UsersModule,
+		FoldersModule
 	]
 })
 export class NotesModule {}

@@ -1,4 +1,5 @@
 import {
+	BadRequestException,
 	ForbiddenException,
 	Injectable,
 	NotFoundException
@@ -9,6 +10,7 @@ import { InjectModel } from '@nestjs/mongoose'
 import { Folder, FolderDocument } from './folders.model'
 import { Model } from 'mongoose'
 import { User, UserDocument } from '../users/users.model'
+import { NoteDocument } from 'src/notes/notes.model'
 
 @Injectable()
 export class FoldersService {
@@ -62,17 +64,75 @@ export class FoldersService {
 		}
 	}
 
-	async findById(id: string, userId: MongoType) {
+	async findById(id: MongoType, userId: MongoType) {
 		const folder = await this.folderModel
 			.findById(id)
 			.populate<{ user: UserDocument }>('user')
+			.populate<{ notes: NoteDocument[] }>('notes')
 			.exec()
 
-		if (!folder) throw new NotFoundException('Заметка не найдена.')
+		if (!folder) throw new NotFoundException('Папка не найдена.')
 
 		if (folder.user._id.toString() !== userId.toString())
 			throw new ForbiddenException('У вас нету доступа к этой заметке.')
 
 		return folder
+	}
+
+	async addedNoteToFolder(
+		folderId: MongoType,
+		noteId: MongoType,
+		userId: string
+	) {
+		const folder = await this.findById(folderId, userId)
+
+		if (folder.notes.find(i => i.id === noteId))
+			throw new BadRequestException('Заметка уже добавлена в папку')
+
+		return await this.folderModel.findByIdAndUpdate(
+			folderId,
+			{
+				$push: {
+					notes: noteId
+				}
+			},
+			{
+				returnDocument: 'after'
+			}
+		)
+	}
+
+	async removeNoteFromFolder(
+		folderId: MongoType,
+		noteId: MongoType,
+		userId: string
+	) {
+		const folder = await this.findById(folderId, userId)
+
+		if (!folder.notes.find(i => i.id === noteId))
+			throw new BadRequestException('Заметки нету в папку')
+
+		return await this.folderModel.findByIdAndUpdate(
+			folderId,
+			{
+				$pull: {
+					notes: noteId
+				}
+			},
+			{
+				returnDocument: 'after'
+			}
+		)
+	}
+
+	async getMaxOrder(id: MongoType, userId: MongoType) {
+		const folder = await this.findById(id, userId)
+
+		const maxOrder =
+			folder!.notes.length > 0
+				? Math.max(...folder!.notes.map(n => n.order))
+				: 0
+
+		return maxOrder
 	}
 }

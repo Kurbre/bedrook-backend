@@ -2,6 +2,7 @@ import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose'
 import mongoose, { HydratedDocument } from 'mongoose'
 import { User } from '../users/users.model'
 import { type Types, type PopulatedDoc } from 'mongoose'
+import { Folder } from 'src/folders/folders.model'
 
 export type NoteDocument = HydratedDocument<Note>
 
@@ -27,6 +28,12 @@ export class Note {
 		required: true
 	})
 	user: PopulatedDoc<User & Types.Subdocument>
+
+	@Prop({
+		type: mongoose.Schema.Types.ObjectId,
+		ref: 'Folder'
+	})
+	folder: PopulatedDoc<Folder & Types.Subdocument>
 }
 
 export const NoteSchema = SchemaFactory.createForClass(Note)

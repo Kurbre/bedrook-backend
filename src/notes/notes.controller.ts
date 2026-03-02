@@ -7,7 +7,8 @@ import {
 	Param,
 	Delete,
 	HttpCode,
-	HttpStatus
+	HttpStatus,
+	Query
 } from '@nestjs/common'
 import { NotesService } from './notes.service'
 import { UpdateNoteDto } from './dto/update-note.dto'
@@ -35,5 +36,27 @@ export class NotesController {
 		@GetUser('_id') userId: string
 	) {
 		return this.notesService.update(id, dto, userId)
+	}
+
+	@Auth()
+	@Post('add-to-folder/:id')
+	@HttpCode(HttpStatus.OK)
+	addNoteToFolder(
+		@Param('id') noteId: string,
+		@Query('folderId') folderId: string,
+		@GetUser('_id') userId: string
+	) {
+		return this.notesService.addedNoteToFolder(folderId, noteId, userId)
+	}
+
+	@Auth()
+	@Post('remove-from-folder/:id')
+	@HttpCode(HttpStatus.OK)
+	removeNoteFromFolder(
+		@Param('id') noteId: string,
+		@Query('folderId') folderId: string,
+		@GetUser('_id') userId: string
+	) {
+		return this.notesService.removeNoteFromFolder(folderId, noteId, userId)
 	}
 }
