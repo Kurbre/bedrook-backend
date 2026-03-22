@@ -6,24 +6,12 @@ import {
 	MinLength
 } from 'class-validator'
 
-export class CreateUserDto {
+export class AuthDto {
 	@IsEmail({}, { message: 'Email не валидный' })
 	@IsNotEmpty({ message: 'Поле Email не может быть пустым' })
 	@MinLength(2, { message: 'Минимальная длина Email 6 символов' })
 	@MaxLength(32, { message: 'Максимальная длина Email 64 символа' })
 	email: string
-
-	@IsNotEmpty({ message: 'Поле имя не может быть пустым' })
-	@IsString({ message: 'Поле имя не являеться строкой' })
-	@MinLength(2, { message: 'Минимальная длина имени 2 символа' })
-	@MaxLength(32, { message: 'Максимальная длина имени 64 символа' })
-	name: string
-
-	@IsNotEmpty({ message: 'Поле фамилия не может быть пустым' })
-	@IsString({ message: 'Поле фамилия не являеться строкой' })
-	@MinLength(2, { message: 'Минимальная длина фамилии 2 символа' })
-	@MaxLength(32, { message: 'Максимальная длина фамилии 64 символа' })
-	surname: string
 
 	@IsNotEmpty({ message: 'Поле пароль не может быть пустым' })
 	@IsString({ message: 'Поле пароль не являеться строкой' })

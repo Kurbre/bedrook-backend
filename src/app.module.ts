@@ -1,13 +1,11 @@
 import { Module } from '@nestjs/common'
 import { ConfigModule, ConfigService } from '@nestjs/config'
-import { MongooseModule } from '@nestjs/mongoose'
-import { mongoConfig } from './config/mongo.config'
-import { UsersModule } from './users/users.module'
 import { JwtModule } from '@nestjs/jwt'
 import { jwtConfig } from './config/jwt.config'
-import { AuthModule } from './auth/auth.module'
-import { NotesModule } from './notes/notes.module'
-import { FoldersModule } from './folders/folders.module';
+import { PrismaModule } from './prisma/prisma.module'
+import { UsersModule } from './users/users.module';
+import { AuthModule } from './auth/auth.module';
+import { MailModule } from './mail/mail.module';
 
 @Module({
 	imports: [
@@ -15,21 +13,16 @@ import { FoldersModule } from './folders/folders.module';
 			isGlobal: true,
 			envFilePath: '.env'
 		}),
-		MongooseModule.forRootAsync({
-			imports: [ConfigModule],
-			inject: [ConfigService],
-			useFactory: mongoConfig
-		}),
 		JwtModule.registerAsync({
 			global: true,
 			imports: [ConfigModule],
 			inject: [ConfigService],
 			useFactory: jwtConfig
 		}),
+		PrismaModule,
 		UsersModule,
 		AuthModule,
-		NotesModule,
-		FoldersModule
+		MailModule
 	],
 	controllers: [],
 	providers: []

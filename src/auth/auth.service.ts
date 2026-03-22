@@ -1,49 +1,48 @@
-import { type Request, Response } from 'express'
-import { UsersService } from '../users/users.service'
-import { CreateUserDto } from '../users/dto/create-user.dto'
-import { JwtService } from '@nestjs/jwt'
 import {
 	Injectable,
 	InternalServerErrorException,
 	UnauthorizedException
 } from '@nestjs/common'
-import { LoginDto } from './dto/login.dto'
+import { JwtService } from '@nestjs/jwt'
+import { User } from '@prisma/client'
+import { Response, type Request } from 'express'
+import { CreateUserDto } from 'src/users/dto/create-user.dto'
+import { UsersService } from 'src/users/users.service'
+import { AuthDto } from './dto/auth.dto'
 import { verify } from 'argon2'
 import { ConfigService } from '@nestjs/config'
+import { MailService } from 'src/mail/mail.service'
 
 @Injectable()
 export class AuthService {
 	constructor(
 		private readonly usersService: UsersService,
 		private readonly jwtService: JwtService,
-		private readonly configService: ConfigService
+		private readonly configService: ConfigService,
+		private readonly mailService: MailService
 	) {}
-
-	async login({ password, login }: LoginDto, req: Request) {
-		const user = await this.usersService.findUserSelectedPassword(login)
-
-		const isValidPassword = await verify(user.password, password)
-
-		if (!isValidPassword) {
-			throw new UnauthorizedException('Логин или пароль не верные')
-		}
-
-		const token = await this.generateJwtToken(user.id)
-		await this.saveSession(req, token)
-
-		return await this.usersService.findUser(login)
-	}
 
 	async register(dto: CreateUserDto, req: Request) {
 		const user = await this.usersService.create(dto)
 
-		const token = await this.generateJwtToken(user.id)
-		await this.saveSession(req, token)
+		await this.saveSession(req, user)
 
 		return user
 	}
 
-	logout(req: Request, res: Response): Promise<{ message: string }> {
+	async login(dto: AuthDto, req: Request) {
+		const { password, ...user } = await this.usersService.findByEmail(dto.email)
+
+		const isValidPassword = await verify(password, dto.password)
+		if (!isValidPassword)
+			throw new UnauthorizedException('Email или пароль не правильные')
+
+		await this.saveSession(req, user)
+
+		return user
+	}
+
+	async logout(req: Request, res: Response): Promise<{ message: string }> {
 		return new Promise((resolve, reject) => {
 			if (!req.session.token)
 				return reject(
@@ -53,42 +52,46 @@ export class AuthService {
 				)
 
 			req.session.destroy(err => {
-				if (err) {
+				if (err)
 					return reject(
 						new InternalServerErrorException('Не удалось выйти из аккаунта.')
 					)
-				}
 
 				res.clearCookie(this.configService.getOrThrow<string>('COOKIE_NAME'))
-
 				resolve({
-					message: 'Вы вышли из аккаунта.'
+					message: 'Вы успешно вышли из аккаунта.'
 				})
 			})
 		})
 	}
 
-	private async generateJwtToken(id: string) {
-		return await this.jwtService.signAsync({ id })
+	async getTemplate() {}
+
+	private async generateJwtToken(user: Omit<User, 'password'>) {
+		return this.jwtService.signAsync({
+			sub: user.id,
+			email: user.email
+		})
 	}
 
-	private saveSession(req: Request, token: string): Promise<string> {
-		return new Promise((resolve, reject) => {
-			if (!req.session) {
-				return reject(
-					new InternalServerErrorException('Сессия не инициализирована')
-				)
-			}
+	private async saveSession(req: Request, user: Omit<User, 'password'>) {
+		const token = await this.generateJwtToken(user)
 
+		return new Promise((resolve, reject) => {
 			req.session.token = token
 
 			req.session.save(err => {
-				if (err)
-					return reject(
-						new InternalServerErrorException('Не удалось сохранить сессию')
-					)
+				if (err) {
+					console.log(err)
 
-				resolve(token)
+					return reject(
+						new InternalServerErrorException(
+							'Не удалось сохранить сессию. Проверьте, правильно ли настроены параметры сесси.'
+						)
+					)
+				}
+
+				resolve(user)
 			})
 		})
 	}

@@ -3,20 +3,14 @@ import { AppModule } from './app.module'
 import session from 'express-session'
 import { ConfigService } from '@nestjs/config'
 import { ValidationPipe } from '@nestjs/common'
+import { Pool } from 'pg'
 
-const MongoDBStore = require('connect-mongodb-session')(session)
+const pgSession = require('connect-pg-simple')
 
 async function bootstrap() {
 	const app = await NestFactory.create(AppModule)
 	const config = app.get(ConfigService)
-
-	const store = new MongoDBStore({
-		uri: config.getOrThrow<string>('MONGO_URI'),
-		collection: 'auth_sessions',
-		connectionOptions: {
-        dbName: config.getOrThrow<string>("DB_NAME"),
-    }
-	})
+	const pgStore = pgSession(session)
 
 	app.setGlobalPrefix('api')
 
@@ -42,17 +36,12 @@ async function bootstrap() {
 				httpOnly: true, // Защита от XSS
 				secure: false // true только если используете HTTPS
 			},
-			store: store
+			store: new pgStore({
+				conString: config.getOrThrow<string>('DATABASE_URL'),
+				tableName: 'sessions'
+			})
 		})
 	)
-
-	store.on('error', function (error) {
-		console.error('SESSION_STORE_ERROR:', error)
-	})
-
-	store.on('connected', function () {
-		console.log('Session store connected to MongoDB')
-	})
 
 	await app.listen(config.getOrThrow<string>('APP_PORT') ?? 3000)
 }

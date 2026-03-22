@@ -4,74 +4,49 @@ import {
 	NotFoundException
 } from '@nestjs/common'
 import { CreateUserDto } from './dto/create-user.dto'
-import { InjectModel } from '@nestjs/mongoose'
-import { User } from './users.model'
-import { Model } from 'mongoose'
+import { PrismaService } from 'src/prisma/prisma.service'
 import { hash } from 'argon2'
 
 @Injectable()
 export class UsersService {
-	constructor(
-		@InjectModel(User.name) private readonly userModel: Model<User>
-	) {}
+	constructor(private readonly prismaService: PrismaService) {}
 
 	async create(dto: CreateUserDto) {
-		const tempUser = await this.userModel.findOne({
-			$or: [
-				{ email: dto.email },
-				{ login: dto.login },
-			]
+		const isFindedUser = await this.prismaService.user.findUnique({
+			where: {
+				email: dto.email
+			}
 		})
-		if (tempUser)
+		if (isFindedUser)
 			throw new BadRequestException(
-				'Пользователь с такими данными уже существует'
+				'Пользователь с таким email уже зарегестрирован'
 			)
 
 		const hashPassword = await hash(dto.password)
 
-		return await this.userModel.create({
-			...dto,
-			password: hashPassword
+		return await this.prismaService.user.create({
+			data: {
+				...dto,
+				password: hashPassword
+			},
+			select: {
+				id: true,
+				name: true,
+				surname: true,
+				email: true,
+				createdAt: true,
+				updatedAt: true
+			}
 		})
 	}
 
-	async findUserSelectedPassword(searchValue: string) {
-		const user = await this.userModel
-			.findOne({
-				$or: [
-					{ email: searchValue },
-					{ login: searchValue },
-				]
-			})
-			.select('password')
-			.exec()
-		if (!user) throw new NotFoundException('Пользователь не найден')
+	async findByEmail(email: string) {
+		const user = await this.prismaService.user.findUnique({
+			where: { email }
+		})
+		if (!user)
+			throw new NotFoundException('Пользователь с таким Email не найден')
 
 		return user
-	}
-
-	async findUser(searchValue: string) {
-		const user = await this.userModel
-			.findOne({
-				$or: [
-					{ email: searchValue },
-					{ login: searchValue },
-				]
-			})
-			.exec()
-		if (!user) throw new NotFoundException('Пользователь не найден')
-
-		return user
-	}
-
-	async findById(id: string) {
-		const user = await this.userModel.findById(id).exec()
-		if (!user) throw new NotFoundException('Пользователь не найден')
-
-		return user
-	}
-
-	async findByIdNoValidation(id: string) {
-		return await this.userModel.findById(id).exec()
 	}
 }

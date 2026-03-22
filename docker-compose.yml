@@ -1,0 +1,18 @@
+version: '3.9'
+
+services:
+  db:
+    image: postgres:15 # версия PostgreSQL
+    container_name: postgres_db
+    restart: always
+    environment:
+      POSTGRES_USER: admin # имя пользователя
+      POSTGRES_PASSWORD: 123123 # пароль
+      POSTGRES_DB: donation # база данных
+    ports:
+      - '5432:5432' # проброс порта на хост
+    volumes:
+      - pgdata:/var/lib/postgresql/data # сохранение данных
+
+volumes:
+  pgdata:
